@@ -5,12 +5,10 @@ const port = 8000;
 const app = express();
 app.use(express.urlencoded({ extended: true }));
 
-const carList = JSON.parse(fs.readFileSync(`${__dirname}/cars.json`));
-
-
+const carList = JSON.parse(fs.readFileSync(`${__dirname}/data/cars.json`));
 
 app.get('/', (req, res) => {
-    res.json({
+    res.status(200).json({
         message: 'ping succesfully'
     })
 });
@@ -22,7 +20,7 @@ app.get('/cars', (req, res) => {
 app.get('/cars/:id', (req, res) => {
     const findCarByID = carList.find(car => car.id == req.params.id);
     if (findCarByID) {
-        res.json(findCarByID);
+        res.status(200).json(findCarByID);
     } else {
         res.status(404).json({ message: "Tidak ada mobil yang sesuai dengan id diberikan" });
     }
@@ -37,12 +35,12 @@ app.post('/cars', (req, res) => {
 app.put('/cars/:id', (req, res) => {
     const carId = req.params.id;
     const updatedCar = req.body;
-    const index = carsData.findIndex(car => car.id === carId);
+    const index = carList.findIndex(car => car.id === carId);
     if (index !== -1) {
         carList[index] = updatedCar;
-        res.json(updatedCar);
+        res.status(200).json(updatedCar);
     } else {
-        res.status(404).json({ message: "Mobil tidak ditemukan" });
+        res.status(404).json({ message: "update data mobil gagal!" });
     }
 });
 
@@ -51,9 +49,9 @@ app.delete('/cars/:id', (req, res) => {
     const index = carList.findIndex(car => car.id === carId);
     if (index !== -1) {
         const deletedCar = carList.splice(index, 1)[0];
-        res.json(deletedCar);
+        res.status(200).json(deletedCar);
     } else {
-        res.status(404).json({ message: "Mobil tidak ditemukan" });
+        res.status(404).json({ message: "Hapus data mobil gagal" });
     }
 });
 
