@@ -3,9 +3,10 @@ const fs = require('fs');
 const port = 8000;
 
 const app = express();
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
 
-const carList = JSON.parse(fs.readFileSync(`${__dirname}/data/cars.json`));
+const dataPath = `${__dirname}/data/cars.json`;
+const carList = JSON.parse(fs.readFileSync(dataPath));
 
 app.get('/', (req, res) => {
     res.status(200).json({
@@ -14,33 +15,85 @@ app.get('/', (req, res) => {
 });
 
 app.get('/cars', (req, res) => {
-    res.json(carList);
+    if (!carList) {
+        return res.json({
+            status: 'failed',
+            message: 'data not found'
+        })
+    }
+    res.json({
+        status: 'success',
+        data: carList
+    });
 });
 
 app.get('/cars/:id', (req, res) => {
     const findCarByID = carList.find(car => car.id == req.params.id);
     if (findCarByID) {
-        res.status(200).json(findCarByID);
+        res.status(200).json({
+            status: 'success',
+            data: findCarByID
+        });
     } else {
-        res.status(404).json({ message: "Tidak ada mobil yang sesuai dengan id diberikan" });
+        res.status(404).json({
+            status: 'failed',
+            message: "Tidak ada mobil yang sesuai dengan id diberikan"
+        });
     }
 });
 
 app.post('/cars', (req, res) => {
     const newCar = req.body;
+
+    for (const car of carList) {
+        if (car.plate === newCar.plate) {
+            return res.status(409).json({
+                status: 'failed',
+                message: 'plat nomor yang diberikan sudah terdaftar'
+            });
+        }
+    }
+
     carList.push(newCar);
-    res.status(201).json(newCar);
+    fs.writeFile(dataPath, JSON.stringify(carList), err => {
+        if (err) {
+            return res.status(404).json({
+                status: 'failed',
+                message: 'Error ketika menulis data ke file json'
+            })
+        }
+        res.status(201).json({
+            status: 'success',
+            data: newCar
+        });
+    });
 });
 
 app.put('/cars/:id', (req, res) => {
     const carId = req.params.id;
     const updatedCar = req.body;
     const index = carList.findIndex(car => car.id === carId);
+
     if (index !== -1) {
         carList[index] = updatedCar;
-        res.status(200).json(updatedCar);
+        fs.writeFile(dataPath, JSON.stringify(carList), err => {
+            if (err) {
+                return res.status(404).json({
+                    status: 'failed',
+                    message: 'gagal menulis data ke dalam file json'
+                })
+            }
+            res.status(200).json({
+                status: 'success',
+                data: updatedCar
+            });
+        })
+
     } else {
-        res.status(404).json({ message: "update data mobil gagal!" });
+        res.status(404).json({
+            status: 'failed',
+            message: "id mobil yang diberikan tidak ditemukan!"
+        });
     }
 });
 
@@ -49,9 +102,24 @@ app.delete('/cars/:id', (req, res) => {
     const index = carList.findIndex(car => car.id === carId);
     if (index !== -1) {
         const deletedCar = carList.splice(index, 1)[0];
-        res.status(200).json(deletedCar);
+        fs.writeFile(dataPath, JSON.stringify(carList), err => {
+            if (err) {
+                return res.status(404).json({
+                    status: 'failed',
+                    message: 'gagal menulis data ke dalam file json'
+                });
+            }
+            res.status(200).json({
+                status: 'success',
+                data: deletedCar
+            });
+        })
+
     } else {
-        res.status(404).json({ message: "Hapus data mobil gagal" });
+        res.status(404).json({
+            status: 'failed',
+            message: "id yang diberikan tidak ditemukan"
+        });
     }
 });
 
