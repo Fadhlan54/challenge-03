@@ -13,7 +13,7 @@ const getAllCarsData = (req, res) => {
   if (!carList) {
     return res.json({
       status: "failed",
-      message: "data not found",
+      message: "data tidak ditemukan",
     });
   }
   res.json({
@@ -32,7 +32,7 @@ const getCarDataByID = (req, res) => {
   } else {
     res.status(404).json({
       status: "failed",
-      message: "Tidak ada mobil yang sesuai dengan id diberikan",
+      message: "id mobil tidak ditemukan",
     });
   }
 };
@@ -73,7 +73,7 @@ const editCarData = (req, res) => {
     carList[index] = updatedCar;
     fs.writeFile(dataPath, JSON.stringify(carList), (err) => {
       if (err) {
-        return res.status(404).json({
+        return res.status(500).json({
           status: "failed",
           message: "gagal menulis data ke dalam file json",
         });
@@ -98,7 +98,7 @@ const deleteCarData = (req, res) => {
     const deletedCar = carList.splice(index, 1)[0];
     fs.writeFile(dataPath, JSON.stringify(carList), (err) => {
       if (err) {
-        return res.status(404).json({
+        return res.status(500).json({
           status: "failed",
           message: "gagal menulis data ke dalam file json",
         });
